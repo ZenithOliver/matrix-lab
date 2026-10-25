@@ -626,7 +626,26 @@ async function main() {
     await evaluate("document.querySelector('.mode-tab[data-mode=\"operations\"]').click()");
     await delays(260);
 
-    await evaluate("document.querySelector('.operation-option[data-operation=\"subtract\"]').click()");
+    check(
+      '运算模式已移除顶部四个运算标签',
+      (await evaluate("document.querySelectorAll('.operation-switch, .operation-option').length")) === 0,
+    );
+    check(
+      '初始展示两个矩阵和三个添加空隙',
+      await evaluate(
+        "document.querySelectorAll('.expression-matrix-card').length === 2 && document.querySelectorAll('.gap-add-button').length === 3",
+      ),
+    );
+    check(
+      '矩阵之间为圆形运算选择器',
+      (await evaluate("document.querySelector('.gap-operator-select').value")) === 'add',
+    );
+
+    await evaluate(`(() => {
+      const select = document.querySelector('.gap-operator-select');
+      select.value = 'subtract';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    })()`);
     await delays(180);
     check(
       '矩阵减法结果正确',
@@ -635,7 +654,11 @@ async function main() {
       )) === '1 −1 4 2',
     );
 
-    await evaluate("document.querySelector('.operation-option[data-operation=\"multiply\"]').click()");
+    await evaluate(`(() => {
+      const select = document.querySelector('.gap-operator-select');
+      select.value = 'multiply';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    })()`);
     await delays(180);
     check(
       '矩阵乘法结果正确',
@@ -643,75 +666,111 @@ async function main() {
         "document.querySelector('#arithmeticResultList .matrix-table').innerText.replace(/\\s+/g,' ').trim()",
       )) === '2 5 4 11',
     );
+
+    await evaluate("document.querySelector('.transpose-toggle').click()");
+    await delays(180);
     check(
-      '乘法保持 B 行数与 A 列数同步且可调整 B 列',
+      '单个矩阵可以独立转置',
+      (await evaluate(
+        "document.querySelector('#arithmeticResultList .matrix-table').innerText.replace(/\\s+/g,' ').trim()",
+      )) === '2 8 1 5',
+    );
+    check(
+      '转置状态显示在矩阵标签上',
       await evaluate(
-        "document.getElementById('operandBRows').value === '2' && document.getElementById('operandBRows').disabled && !document.getElementById('operandBCols').disabled",
+        "document.querySelector('.expression-matrix-card .transpose-toggle').getAttribute('aria-pressed') === 'true' && document.querySelector('.expression-matrix-card h2').textContent.includes('Aᵀ')",
+      ),
+    );
+    await evaluate("document.querySelector('.transpose-toggle').click()");
+    await delays(140);
+
+    await evaluate(`(() => {
+      const select = document.querySelector('.gap-operator-select');
+      select.value = 'add';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      document.querySelector('.matrix-gap[data-gap="1"] .gap-add-button').click();
+    })()`);
+    await delays(250);
+    check(
+      '点击添加打开矩阵类型对话框',
+      await evaluate(
+        "document.getElementById('addMatrixDialog').open === true && document.getElementById('addMatrixDialog').textContent.includes('想要添加的矩阵类型')",
       ),
     );
     check(
-      '乘法提供逐项展开明细',
-      (await evaluate("document.querySelectorAll('#arithmeticResultList .arithmetic-detail-item').length")) === 4,
+      '对话框提供三种矩阵类型',
+      (await evaluate("document.querySelectorAll('input[name=\"matrixKind\"]').length")) === 3,
+    );
+    await evaluate(`(() => {
+      const input = document.querySelector('input[name="matrixKind"][value="identity"]');
+      input.checked = true;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      const rows = document.getElementById('addMatrixRows');
+      rows.value = '2';
+      rows.dispatchEvent(new Event('change', { bubbles: true }));
+    })()`);
+    await delays(100);
+    check(
+      '单位矩阵自动锁定为方阵',
+      await evaluate(
+        "document.getElementById('addMatrixCols').disabled && document.getElementById('addMatrixCols').value === document.getElementById('addMatrixRows').value",
+      ),
+    );
+    await screenshot('arithmetic-dialog.png');
+    await evaluate("document.querySelector('.matrix-type-dialog .dialog-confirm').click()");
+    await delays(300);
+    check(
+      '添加后出现三个矩阵和四个空隙',
+      await evaluate(
+        "document.querySelectorAll('.expression-matrix-card').length === 3 && document.querySelectorAll('.gap-add-button').length === 4",
+      ),
+    );
+    check(
+      '单位矩阵卡片显示类型与自动内容',
+      await evaluate(
+        "document.querySelectorAll('.expression-matrix-card')[1].textContent.includes('单位矩阵') && document.querySelectorAll('.expression-matrix-card')[1].querySelectorAll('.matrix-table td').length === 4",
+      ),
+    );
+    check(
+      '多矩阵加法结果正确',
+      (await evaluate(
+        "document.querySelector('#arithmeticResultList .matrix-table').innerText.replace(/\\s+/g,' ').trim()",
+      )) === '4 3 4 5',
+    );
+    check(
+      '多矩阵表达式保留计算步骤',
+      await evaluate(
+        "document.querySelectorAll('#arithmeticResultList .step-item').length >= 2",
+      ),
     );
     await evaluate("document.querySelector('#arithmeticResultList .steps-summary').click()");
     await delays(120);
-    check(
-      '乘法明细可以展开',
-      await evaluate("document.querySelector('#arithmeticResultList .steps-panel').open === true"),
-    );
     await screenshot('arithmetic-desktop.png', true);
 
-    await evaluate("document.querySelector('.operation-option[data-operation=\"transpose\"]').click()");
-    await delays(180);
-    check(
-      '转置结果正确',
-      (await evaluate(
-        "document.querySelector('#arithmeticResultList .matrix-table').innerText.replace(/\\s+/g,' ').trim()",
-      )) === '2 4 1 3',
+    await evaluate(
+      "document.querySelectorAll('.expression-matrix-card')[1].querySelector('.remove-matrix-button').click()",
     );
+    await delays(220);
     check(
-      '转置时隐藏矩阵 B',
-      await evaluate("document.getElementById('operandBPanel').hidden === true"),
+      '可以移除新增矩阵并回到两个矩阵',
+      (await evaluate("document.querySelectorAll('.expression-matrix-card').length")) === 2,
     );
 
-    await evaluate("document.querySelector('.operation-option[data-operation=\"multiply\"]').click()");
-    await delays(120);
     await evaluate(`(() => {
-      const select = document.getElementById('operandACols');
-      select.value = '3';
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-    })()`);
-    await delays(140);
-    check(
-      '改变 A 列数会自动同步 B 行数',
-      await evaluate(
-        "document.getElementById('operandBRows').value === '3' && document.getElementById('operandBRows').disabled",
-      ),
-    );
-    await evaluate(`(() => {
-      const select = document.getElementById('operandACols');
-      select.value = '2';
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-    })()`);
-    await delays(100);
-
-    await evaluate("document.querySelector('.operation-option[data-operation=\"add\"]').click()");
-    await delays(160);
-    await evaluate(`(() => {
-      const setValues = (selector, values) => {
-        const inputs = [...document.querySelectorAll(selector)];
+      const setValues = (cardIndex, values) => {
+        const inputs = [...document.querySelectorAll('.expression-matrix-card')[cardIndex].querySelectorAll('.matrix-input')];
         inputs.forEach((input, index) => {
           input.value = values[index];
           input.dispatchEvent(new Event('input', { bubbles: true }));
         });
       };
-      setValues('#operandAEditor .matrix-input', ['a', 'b', 'c', 'd']);
-      setValues('#operandBEditor .matrix-input', ['1', '0', '0', '1']);
+      setValues(0, ['a', 'b', 'c', 'd']);
+      setValues(1, ['1', '0', '0', '1']);
       document.getElementById('arithmeticCalculate').click();
     })()`);
     await delays(220);
     check(
-      '矩阵运算支持符号常数',
+      '矩阵表达式支持符号常数',
       await evaluate("!document.getElementById('arithmeticSymbolicNotice').hidden"),
     );
     check(
@@ -801,18 +860,19 @@ async function main() {
 
     await evaluate("document.querySelector('.mode-tab[data-mode=\"operations\"]').click()");
     await delays(260);
-    await evaluate("document.querySelector('.operation-option[data-operation=\"multiply\"]').click()");
-    await delays(160);
     await evaluate(`(() => {
-      const setValues = (selector, values) => {
-        const inputs = [...document.querySelectorAll(selector)];
+      const select = document.querySelector('.gap-operator-select');
+      select.value = 'multiply';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      const setValues = (cardIndex, values) => {
+        const inputs = [...document.querySelectorAll('.expression-matrix-card')[cardIndex].querySelectorAll('.matrix-input')];
         inputs.forEach((input, index) => {
           input.value = values[index];
           input.dispatchEvent(new Event('input', { bubbles: true }));
         });
       };
-      setValues('#operandAEditor .matrix-input', ['2', '1', '4', '3']);
-      setValues('#operandBEditor .matrix-input', ['1', '2', '0', '1']);
+      setValues(0, ['2', '1', '4', '3']);
+      setValues(1, ['1', '2', '0', '1']);
       document.getElementById('arithmeticCalculate').click();
     })()`);
     await delays(250);

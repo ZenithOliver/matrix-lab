@@ -19,6 +19,7 @@
     <script defer src="js/core/algorithms.js"></script>
     <script defer src="js/core/symbolic.js"></script>
     <script defer src="js/core/operations.js"></script>
+    <script defer src="js/core/expressions.js"></script>
     <script defer src="js/ui/dom.js"></script>
     <script defer src="js/ui/components.js"></script>
     <script defer src="js/features/registry.js"></script>
@@ -255,126 +256,34 @@
               <p class="section-eyebrow">ARITHMETIC / 运算</p>
               <h1>矩阵运算</h1>
               <p class="operations-intro">
-                选择 A 与 B 的运算，逐格输入元素。支持精确分数、符号常数和 1–8 阶矩阵。
+                在矩阵之间选择加减乘，点击空隙中的“添加”加入更多矩阵。支持精确分数、符号常数和矩阵类型。
               </p>
             </div>
-
-            <div class="operation-switch" id="operationSwitch" role="group" aria-label="选择矩阵运算">
-              <button
-                class="operation-option is-active"
-                type="button"
-                data-operation="add"
-                aria-pressed="true"
-              >
-                <span class="operation-expression">A + B</span>
-                <span class="operation-label">加法</span>
-              </button>
-              <button
-                class="operation-option"
-                type="button"
-                data-operation="subtract"
-                aria-pressed="false"
-              >
-                <span class="operation-expression">A − B</span>
-                <span class="operation-label">减法</span>
-              </button>
-              <button
-                class="operation-option"
-                type="button"
-                data-operation="multiply"
-                aria-pressed="false"
-              >
-                <span class="operation-expression">A × B</span>
-                <span class="operation-label">乘法</span>
-              </button>
-              <button
-                class="operation-option"
-                type="button"
-                data-operation="transpose"
-                aria-pressed="false"
-              >
-                <span class="operation-expression">Aᵀ</span>
-                <span class="operation-label">转置</span>
-              </button>
+            <div class="expression-rule" aria-label="运算顺序">
+              <span class="expression-rule-eyebrow">ORDER</span>
+              <strong>先乘后加减</strong>
+              <span>从左到右</span>
             </div>
           </header>
 
-          <div class="operation-workbench" id="operationWorkbench">
-            <section class="operand-card" aria-labelledby="operandATitle">
-              <header class="operand-heading">
-                <div class="operand-title-group">
-                  <span class="operand-letter" aria-hidden="true">A</span>
-                  <div>
-                    <h2 id="operandATitle">矩阵 A</h2>
-                    <p class="operand-meta" id="operandAMeta">2 行 × 2 列</p>
-                  </div>
-                </div>
-                <div class="operand-dims">
-                  <label class="operand-dim-field">
-                    <span>行</span>
-                    <select id="operandARows" aria-label="矩阵 A 行数"></select>
-                  </label>
-                  <span class="dimension-cross" aria-hidden="true">×</span>
-                  <label class="operand-dim-field">
-                    <span>列</span>
-                    <select id="operandACols" aria-label="矩阵 A 列数"></select>
-                  </label>
-                </div>
-              </header>
-              <div class="operand-editor-frame">
-                <div
-                  class="matrix-editor operand-editor"
-                  id="operandAEditor"
-                  role="group"
-                  aria-label="矩阵 A 元素输入"
-                ></div>
-              </div>
-            </section>
-
-            <div class="operation-glyph" id="operationGlyph" aria-hidden="true">+</div>
-
-            <section class="operand-card" id="operandBPanel" aria-labelledby="operandBTitle">
-              <header class="operand-heading">
-                <div class="operand-title-group">
-                  <span class="operand-letter" aria-hidden="true">B</span>
-                  <div>
-                    <h2 id="operandBTitle">矩阵 B</h2>
-                    <p class="operand-meta" id="operandBMeta">2 行 × 2 列</p>
-                  </div>
-                </div>
-                <div class="operand-dims">
-                  <label class="operand-dim-field">
-                    <span>行</span>
-                    <select id="operandBRows" aria-label="矩阵 B 行数"></select>
-                  </label>
-                  <span class="dimension-cross" aria-hidden="true">×</span>
-                  <label class="operand-dim-field">
-                    <span>列</span>
-                    <select id="operandBCols" aria-label="矩阵 B 列数"></select>
-                  </label>
-                </div>
-              </header>
-              <div class="operand-editor-frame">
-                <div
-                  class="matrix-editor operand-editor"
-                  id="operandBEditor"
-                  role="group"
-                  aria-label="矩阵 B 元素输入"
-                ></div>
-              </div>
-              <p class="operand-dim-note" id="operandBNote">尺寸自动匹配运算要求</p>
-            </section>
+          <div class="expression-builder-shell">
+            <div
+              class="expression-builder"
+              id="expressionBuilder"
+              role="group"
+              aria-label="矩阵表达式编排区"
+            ></div>
           </div>
 
           <div class="operations-toolbar">
             <p class="operations-hint" id="operationHint">
-              A 与 B 尺寸相同，逐元素相加。
+              点击圆形运算符切换加法、减法或乘法；点击空隙中的“添加”可加入新矩阵。
             </p>
             <div class="operations-actions">
               <button class="button button-quiet" id="arithmeticRandom" type="button">随机示例</button>
-              <button class="button button-quiet" id="arithmeticClear" type="button">清空</button>
+              <button class="button button-quiet" id="arithmeticClear" type="button">清空数值</button>
               <button class="button button-primary arithmetic-calculate" id="arithmeticCalculate" type="button">
-                <span id="arithmeticCalculateLabel">计算 A + B</span>
+                <span id="arithmeticCalculateLabel">计算结果</span>
                 <span class="key-hint" aria-hidden="true">Ctrl ↵</span>
               </button>
             </div>
@@ -384,7 +293,7 @@
 
           <div class="symbolic-notice" id="arithmeticSymbolicNotice" hidden>
             <span class="symbolic-notice-mark" aria-hidden="true">ƒ</span>
-            <span>符号模式：A 或 B 中的非数字文本作为独立常数参与运算，结果保留精确符号式。</span>
+            <span>符号模式：非数字文本作为独立常数参与运算，结果保留精确符号式。</span>
           </div>
 
           <div class="stale-notice" id="arithmeticStaleNotice" hidden>
@@ -413,7 +322,7 @@
             </header>
 
             <div class="summary-bar" id="arithmeticSummary" aria-live="polite">
-              <span class="summary-chip"><span class="chip-label">运算</span><strong id="arithmeticOperationChip">A + B</strong></span>
+              <span class="summary-chip"><span class="chip-label">表达式</span><strong id="arithmeticOperationChip">A + B</strong></span>
               <span class="summary-chip"><span class="chip-label">结果尺寸</span><strong id="arithmeticSizeChip">2 × 2</strong></span>
               <span class="summary-chip"><span class="chip-label">数值类型</span><strong id="arithmeticTypeChip">精确有理数</strong></span>
             </div>
@@ -424,8 +333,69 @@
       </section>
     </main>
 
+    <dialog class="matrix-type-dialog" id="addMatrixDialog" aria-labelledby="addMatrixDialogTitle">
+      <form class="matrix-type-dialog-card" id="addMatrixForm" method="dialog">
+        <header class="matrix-type-dialog-heading">
+          <div>
+            <p class="section-eyebrow">ADD MATRIX</p>
+            <h2 id="addMatrixDialogTitle">添加矩阵</h2>
+            <p>想要添加的矩阵类型：</p>
+          </div>
+          <button class="dialog-close" id="addMatrixClose" type="button" aria-label="关闭添加矩阵对话框">×</button>
+        </header>
+
+        <fieldset class="matrix-type-options">
+          <legend class="sr-only">矩阵类型</legend>
+          <label class="matrix-type-option">
+            <input type="radio" name="matrixKind" value="normal" checked />
+            <span class="matrix-type-icon" aria-hidden="true">▦</span>
+            <span>
+              <strong>普通矩阵</strong>
+              <small>自由输入每个元素</small>
+            </span>
+          </label>
+          <label class="matrix-type-option">
+            <input type="radio" name="matrixKind" value="identity" />
+            <span class="matrix-type-icon" aria-hidden="true">I</span>
+            <span>
+              <strong>单位矩阵</strong>
+              <small>对角线为 1，其余为 0</small>
+            </span>
+          </label>
+          <label class="matrix-type-option">
+            <input type="radio" name="matrixKind" value="zero" />
+            <span class="matrix-type-icon" aria-hidden="true">O</span>
+            <span>
+              <strong>零矩阵</strong>
+              <small>所有元素都是 0</small>
+            </span>
+          </label>
+        </fieldset>
+
+        <div class="matrix-type-dialog-dims">
+          <span class="dialog-field-label">尺寸</span>
+          <label class="operand-dim-field">
+            <span>行</span>
+            <select id="addMatrixRows" aria-label="新矩阵行数"></select>
+          </label>
+          <span class="dimension-cross" aria-hidden="true">×</span>
+          <label class="operand-dim-field">
+            <span>列</span>
+            <select id="addMatrixCols" aria-label="新矩阵列数"></select>
+          </label>
+        </div>
+
+        <p class="matrix-type-dialog-position" id="addMatrixPosition">将插入到矩阵之间。</p>
+
+        <footer class="matrix-type-dialog-actions">
+          <button class="button button-quiet" id="addMatrixCancel" type="button">取消</button>
+          <button class="button button-primary dialog-confirm" type="submit">添加矩阵</button>
+        </footer>
+      </form>
+    </dialog>
+
     <footer class="site-footer">
-      <span>MatrixLab 0.4</span>
+      <span>MatrixLab 0.5</span>
       <span>精确 · 可追溯 · 可扩展</span>
       <span>纯前端 · 无数据上传</span>
     </footer>
