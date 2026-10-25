@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="矩阵工坊：输入矩阵，精确求出简化行阶梯形、伴随矩阵与等价标准型，并保留关键变换步骤。"
+    />
+    <meta name="theme-color" content="#f3f0e8" />
+    <title>矩阵工坊 · MatrixLab</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231d3d32'/%3E%3Cpath d='M22 14h-8v36h8M42 14h8v36h-8' fill='none' stroke='%23f2efe6' stroke-width='4'/%3E%3Ccircle cx='28' cy='26' r='2.5' fill='%23d9b75f'/%3E%3Ccircle cx='36' cy='32' r='2.5' fill='%23f2efe6'/%3E%3Ccircle cx='28' cy='38' r='2.5' fill='%23f2efe6'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+    <script defer src="js/core/fraction.js"></script>
+    <script defer src="js/core/matrices.js"></script>
+    <script defer src="js/core/algorithms.js"></script>
+    <script defer src="js/core/symbolic.js"></script>
+    <script defer src="js/ui/dom.js"></script>
+    <script defer src="js/ui/components.js"></script>
+    <script defer src="js/features/registry.js"></script>
+    <script defer src="js/features/rref.js"></script>
+    <script defer src="js/features/adjugate.js"></script>
+    <script defer src="js/features/standard-form.js"></script>
+    <script defer src="js/app.js"></script>
+  </head>
+  <body>
+    <noscript>
+      <div class="noscript-note">矩阵工坊需要启用 JavaScript 才能计算。请在浏览器设置中允许脚本后刷新页面。</div>
+    </noscript>
+    <a class="skip-link" href="#results">跳到计算结果</a>
+
+    <header class="site-header">
+      <div class="header-inner">
+        <div class="brand" aria-label="矩阵工坊 MatrixLab">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 40 40" fill="none">
+              <path d="M12 4.5H5.5v31H12M28 4.5h6.5v31H28" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+              <circle cx="16.5" cy="14" r="1.55" fill="currentColor" />
+              <circle cx="23.5" cy="14" r="1.55" fill="currentColor" opacity=".55" />
+              <circle cx="16.5" cy="20" r="1.55" fill="currentColor" opacity=".55" />
+              <circle cx="23.5" cy="20" r="1.55" fill="currentColor" />
+              <circle cx="16.5" cy="26" r="1.55" fill="currentColor" />
+              <circle cx="23.5" cy="26" r="1.55" fill="currentColor" opacity=".55" />
+            </svg>
+          </span>
+          <span class="brand-copy">
+            <span class="brand-name">矩阵工坊</span>
+            <span class="brand-sub">MATRIX LAB</span>
+          </span>
+        </div>
+        <div class="header-note">
+          <span class="live-dot" aria-hidden="true"></span>
+          精确分数运算 · 数据只在本机
+        </div>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="input-panel" aria-labelledby="input-heading">
+        <div class="panel-heading">
+          <p class="section-eyebrow">INPUT / 输入</p>
+          <h1 id="input-heading">输入一个矩阵</h1>
+          <p class="panel-intro">填好每个元素，一次得到三种结果。支持 1–8 阶矩阵、整数、小数和 <span class="inline-code">a/b</span> 分数。</p>
+        </div>
+
+        <div class="dimension-row">
+          <label class="dimension-field">
+            <span>行数</span>
+            <select id="rowsSelect" aria-label="矩阵行数"></select>
+          </label>
+          <span class="dimension-cross" aria-hidden="true">×</span>
+          <label class="dimension-field">
+            <span>列数</span>
+            <select id="colsSelect" aria-label="矩阵列数"></select>
+          </label>
+          <span class="dimension-badge" id="dimensionBadge">3 × 3</span>
+        </div>
+
+        <div class="editor-frame">
+          <div id="matrixEditor" class="matrix-editor" role="group" aria-label="矩阵元素输入"></div>
+        </div>
+        <p class="editor-hint">
+          方向键移动格子；点击格子后直接输入即可覆盖旧值。最多 8 行 × 8 列，支持表格粘贴，留空按 0 计算。
+        </p>
+        <p class="editor-symbol-hint">
+          字母或文字（如 a、λ、alpha）按独立常数符号参与计算；遇到需要分类讨论的主元时自动暂停。
+        </p>
+
+        <div class="editor-actions">
+          <button class="button button-quiet" id="randomButton" type="button">随机示例</button>
+          <button class="button button-quiet" id="clearButton" type="button">清空</button>
+        </div>
+
+        <p class="input-error" id="inputError" role="alert" hidden></p>
+
+        <button class="button button-primary" id="calculateButton" type="button">
+          <span>计算矩阵</span>
+          <span class="key-hint" aria-hidden="true">Ctrl ↵</span>
+        </button>
+
+        <div class="appearance-row">
+          <span class="appearance-label">按钮颜色</span>
+          <div class="color-options" id="colorOptions" role="group" aria-label="计算按钮颜色">
+            <button
+              type="button"
+              class="color-swatch is-default"
+              data-color="#1c3a5e"
+              style="--swatch: #1c3a5e"
+              aria-label="深海蓝（默认）"
+              title="深海蓝（默认）"
+              aria-pressed="true"
+            ></button>
+            <button
+              type="button"
+              class="color-swatch"
+              data-color="#314252"
+              style="--swatch: #314252"
+              aria-label="石墨灰蓝"
+              title="石墨灰蓝"
+              aria-pressed="false"
+            ></button>
+            <button
+              type="button"
+              class="color-swatch"
+              data-color="#255545"
+              style="--swatch: #255545"
+              aria-label="松柏绿"
+              title="松柏绿"
+              aria-pressed="false"
+            ></button>
+            <button
+              type="button"
+              class="color-swatch"
+              data-color="#713447"
+              style="--swatch: #713447"
+              aria-label="酒红"
+              title="酒红"
+              aria-pressed="false"
+            ></button>
+            <label class="color-custom" id="customColorLabel" title="选择自定义按钮颜色">
+              <input type="color" id="customColor" value="#1c3a5e" aria-label="自定义按钮颜色" />
+              <span>自定义</span>
+            </label>
+          </div>
+        </div>
+
+        <section class="future-panel" aria-label="未来功能">
+          <div class="future-heading">
+            <span>更多工具</span>
+            <span class="future-tag">接口已预留</span>
+          </div>
+          <div class="future-tools" aria-hidden="true">
+            <span>线性方程组</span>
+            <span>特征值</span>
+            <span>矩阵分解</span>
+          </div>
+          <p>功能按模块注册，后续扩展不会改动现有计算框架。</p>
+        </section>
+      </aside>
+
+      <section class="results-area" id="results" aria-labelledby="results-heading">
+        <header class="results-heading">
+          <div>
+            <p class="section-eyebrow">OUTPUT / 结果</p>
+            <h2 id="results-heading">三种标准结果</h2>
+            <p class="results-intro">每一条结果都附带关键变换过程，结论可复核。</p>
+          </div>
+          <div class="result-status" id="resultStatus" aria-live="polite">
+            <span class="live-dot" id="statusDot" aria-hidden="true"></span>
+            <span id="statusText">准备计算</span>
+          </div>
+        </header>
+
+        <div class="summary-bar" id="summaryBar" aria-live="polite">
+          <span class="summary-chip"><span class="chip-label">尺寸</span><strong id="sizeChip">3 × 3</strong></span>
+          <span class="summary-chip"><span class="chip-label">秩</span><strong id="rankChip">—</strong></span>
+          <span class="summary-chip"><span class="chip-label">行列式</span><strong id="detChip">—</strong></span>
+        </div>
+
+        <div class="symbolic-notice" id="symbolicNotice" hidden>
+          <span class="symbolic-notice-mark" aria-hidden="true">ƒ</span>
+          <span>
+            符号模式：非数字文本作为一个独立常数参与运算；遇到无法判断是否为零的主元时会停下并给出分类条件。
+          </span>
+        </div>
+
+        <div class="stale-notice" id="staleNotice" hidden>
+          <span class="stale-dot" aria-hidden="true"></span>
+          输入已修改，点击“计算矩阵”刷新结果。
+        </div>
+
+        <div class="result-list" id="resultsList"></div>
+
+        <div class="empty-state" id="emptyState" hidden>
+          <span class="empty-glyph" aria-hidden="true">[ ]</span>
+          <p>还没有结果。填写矩阵后点击“计算矩阵”。</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>MatrixLab 0.3</span>
+      <span>精确 · 可追溯 · 可扩展</span>
+      <span>纯前端 · 无数据上传</span>
+    </footer>
+  </body>
+</html>
