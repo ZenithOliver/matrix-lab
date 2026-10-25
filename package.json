@@ -1,10 +1,10 @@
 {
   "name": "matrix-lab",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "description": "一个零依赖的精确矩阵计算网页工具：RREF、伴随矩阵与等价标准型",
   "scripts": {
-    "test": "node --test tests/core.test.js tests/symbolic.test.js",
+    "test": "node --test tests/core.test.js tests/symbolic.test.js tests/operations.test.js",
     "test:ui": "node tests/ui-check.mjs"
   }
 }

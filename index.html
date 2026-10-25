@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="矩阵工坊：输入矩阵，精确求出简化行阶梯形、伴随矩阵与等价标准型，并保留关键变换步骤。"
+      content="矩阵工坊：精确矩阵加减乘、转置、简化行阶梯形、伴随矩阵与等价标准型，支持分数和符号常数。"
     />
     <meta name="theme-color" content="#f3f0e8" />
     <title>矩阵工坊 · MatrixLab</title>
@@ -18,12 +18,15 @@
     <script defer src="js/core/matrices.js"></script>
     <script defer src="js/core/algorithms.js"></script>
     <script defer src="js/core/symbolic.js"></script>
+    <script defer src="js/core/operations.js"></script>
     <script defer src="js/ui/dom.js"></script>
     <script defer src="js/ui/components.js"></script>
     <script defer src="js/features/registry.js"></script>
     <script defer src="js/features/rref.js"></script>
     <script defer src="js/features/adjugate.js"></script>
     <script defer src="js/features/standard-form.js"></script>
+    <script defer src="js/modes.js"></script>
+    <script defer src="js/arithmetic.js"></script>
     <script defer src="js/app.js"></script>
   </head>
   <body>
@@ -51,6 +54,36 @@
             <span class="brand-sub">MATRIX LAB</span>
           </span>
         </div>
+
+        <nav class="mode-switch" role="tablist" aria-label="工作模式">
+          <button
+            class="mode-tab is-active"
+            id="modeTabAnalysis"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            aria-controls="mode-analysis"
+            data-mode="analysis"
+            tabindex="0"
+          >
+            <span class="mode-tab-en">ANALYSIS</span>
+            <span class="mode-tab-label">化简分析</span>
+          </button>
+          <button
+            class="mode-tab"
+            id="modeTabOperations"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="mode-operations"
+            data-mode="operations"
+            tabindex="-1"
+          >
+            <span class="mode-tab-en">ARITHMETIC</span>
+            <span class="mode-tab-label">矩阵运算</span>
+          </button>
+        </nav>
+
         <div class="header-note">
           <span class="live-dot" aria-hidden="true"></span>
           精确分数运算 · 数据只在本机
@@ -58,7 +91,14 @@
       </div>
     </header>
 
-    <main class="workspace">
+    <main class="mode-stage">
+      <section
+        class="workspace mode-view"
+        id="mode-analysis"
+        role="tabpanel"
+        aria-labelledby="modeTabAnalysis"
+        data-mode-view="analysis"
+      >
       <aside class="input-panel" aria-labelledby="input-heading">
         <div class="panel-heading">
           <p class="section-eyebrow">INPUT / 输入</p>
@@ -199,10 +239,193 @@
           <p>还没有结果。填写矩阵后点击“计算矩阵”。</p>
         </div>
       </section>
+      </section>
+
+      <section
+        class="operations-view mode-view"
+        id="mode-operations"
+        role="tabpanel"
+        aria-labelledby="modeTabOperations"
+        data-mode-view="operations"
+        hidden
+      >
+        <div class="operations-inner">
+          <header class="operations-heading">
+            <div class="operations-title-block">
+              <p class="section-eyebrow">ARITHMETIC / 运算</p>
+              <h1>矩阵运算</h1>
+              <p class="operations-intro">
+                选择 A 与 B 的运算，逐格输入元素。支持精确分数、符号常数和 1–8 阶矩阵。
+              </p>
+            </div>
+
+            <div class="operation-switch" id="operationSwitch" role="group" aria-label="选择矩阵运算">
+              <button
+                class="operation-option is-active"
+                type="button"
+                data-operation="add"
+                aria-pressed="true"
+              >
+                <span class="operation-expression">A + B</span>
+                <span class="operation-label">加法</span>
+              </button>
+              <button
+                class="operation-option"
+                type="button"
+                data-operation="subtract"
+                aria-pressed="false"
+              >
+                <span class="operation-expression">A − B</span>
+                <span class="operation-label">减法</span>
+              </button>
+              <button
+                class="operation-option"
+                type="button"
+                data-operation="multiply"
+                aria-pressed="false"
+              >
+                <span class="operation-expression">A × B</span>
+                <span class="operation-label">乘法</span>
+              </button>
+              <button
+                class="operation-option"
+                type="button"
+                data-operation="transpose"
+                aria-pressed="false"
+              >
+                <span class="operation-expression">Aᵀ</span>
+                <span class="operation-label">转置</span>
+              </button>
+            </div>
+          </header>
+
+          <div class="operation-workbench" id="operationWorkbench">
+            <section class="operand-card" aria-labelledby="operandATitle">
+              <header class="operand-heading">
+                <div class="operand-title-group">
+                  <span class="operand-letter" aria-hidden="true">A</span>
+                  <div>
+                    <h2 id="operandATitle">矩阵 A</h2>
+                    <p class="operand-meta" id="operandAMeta">2 行 × 2 列</p>
+                  </div>
+                </div>
+                <div class="operand-dims">
+                  <label class="operand-dim-field">
+                    <span>行</span>
+                    <select id="operandARows" aria-label="矩阵 A 行数"></select>
+                  </label>
+                  <span class="dimension-cross" aria-hidden="true">×</span>
+                  <label class="operand-dim-field">
+                    <span>列</span>
+                    <select id="operandACols" aria-label="矩阵 A 列数"></select>
+                  </label>
+                </div>
+              </header>
+              <div class="operand-editor-frame">
+                <div
+                  class="matrix-editor operand-editor"
+                  id="operandAEditor"
+                  role="group"
+                  aria-label="矩阵 A 元素输入"
+                ></div>
+              </div>
+            </section>
+
+            <div class="operation-glyph" id="operationGlyph" aria-hidden="true">+</div>
+
+            <section class="operand-card" id="operandBPanel" aria-labelledby="operandBTitle">
+              <header class="operand-heading">
+                <div class="operand-title-group">
+                  <span class="operand-letter" aria-hidden="true">B</span>
+                  <div>
+                    <h2 id="operandBTitle">矩阵 B</h2>
+                    <p class="operand-meta" id="operandBMeta">2 行 × 2 列</p>
+                  </div>
+                </div>
+                <div class="operand-dims">
+                  <label class="operand-dim-field">
+                    <span>行</span>
+                    <select id="operandBRows" aria-label="矩阵 B 行数"></select>
+                  </label>
+                  <span class="dimension-cross" aria-hidden="true">×</span>
+                  <label class="operand-dim-field">
+                    <span>列</span>
+                    <select id="operandBCols" aria-label="矩阵 B 列数"></select>
+                  </label>
+                </div>
+              </header>
+              <div class="operand-editor-frame">
+                <div
+                  class="matrix-editor operand-editor"
+                  id="operandBEditor"
+                  role="group"
+                  aria-label="矩阵 B 元素输入"
+                ></div>
+              </div>
+              <p class="operand-dim-note" id="operandBNote">尺寸自动匹配运算要求</p>
+            </section>
+          </div>
+
+          <div class="operations-toolbar">
+            <p class="operations-hint" id="operationHint">
+              A 与 B 尺寸相同，逐元素相加。
+            </p>
+            <div class="operations-actions">
+              <button class="button button-quiet" id="arithmeticRandom" type="button">随机示例</button>
+              <button class="button button-quiet" id="arithmeticClear" type="button">清空</button>
+              <button class="button button-primary arithmetic-calculate" id="arithmeticCalculate" type="button">
+                <span id="arithmeticCalculateLabel">计算 A + B</span>
+                <span class="key-hint" aria-hidden="true">Ctrl ↵</span>
+              </button>
+            </div>
+          </div>
+
+          <p class="input-error" id="arithmeticError" role="alert" hidden></p>
+
+          <div class="symbolic-notice" id="arithmeticSymbolicNotice" hidden>
+            <span class="symbolic-notice-mark" aria-hidden="true">ƒ</span>
+            <span>符号模式：A 或 B 中的非数字文本作为独立常数参与运算，结果保留精确符号式。</span>
+          </div>
+
+          <div class="stale-notice" id="arithmeticStaleNotice" hidden>
+            <span class="stale-dot" aria-hidden="true"></span>
+            输入或尺寸已修改，点击“计算”刷新结果。
+          </div>
+
+          <section
+            class="arithmetic-results"
+            id="arithmeticResults"
+            aria-labelledby="arithmeticResultHeading"
+            aria-live="polite"
+          >
+            <header class="results-heading arithmetic-result-heading">
+              <div>
+                <p class="section-eyebrow">OUTPUT / 结果</p>
+                <h2 id="arithmeticResultHeading">计算结果</h2>
+                <p class="results-intro" id="arithmeticResultSubtitle">
+                  结果按精确值显示，并保留必要的计算说明。
+                </p>
+              </div>
+              <div class="result-status" id="arithmeticStatus">
+                <span class="live-dot" aria-hidden="true"></span>
+                <span id="arithmeticStatusText">准备计算</span>
+              </div>
+            </header>
+
+            <div class="summary-bar" id="arithmeticSummary" aria-live="polite">
+              <span class="summary-chip"><span class="chip-label">运算</span><strong id="arithmeticOperationChip">A + B</strong></span>
+              <span class="summary-chip"><span class="chip-label">结果尺寸</span><strong id="arithmeticSizeChip">2 × 2</strong></span>
+              <span class="summary-chip"><span class="chip-label">数值类型</span><strong id="arithmeticTypeChip">精确有理数</strong></span>
+            </div>
+
+            <div class="result-list" id="arithmeticResultList"></div>
+          </section>
+        </div>
+      </section>
     </main>
 
     <footer class="site-footer">
-      <span>MatrixLab 0.3</span>
+      <span>MatrixLab 0.4</span>
       <span>精确 · 可追溯 · 可扩展</span>
       <span>纯前端 · 无数据上传</span>
     </footer>

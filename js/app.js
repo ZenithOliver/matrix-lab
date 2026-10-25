@@ -717,6 +717,7 @@
     });
 
     document.addEventListener('keydown', (event) => {
+      if (document.documentElement.dataset.mode !== 'analysis') return;
       if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
         event.preventDefault();
         calculate({ source: 'keyboard' });
