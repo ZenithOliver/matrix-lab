@@ -1,5 +1,8 @@
 # 矩阵工坊 · MatrixLab
 
+> **在线使用：** [zenitholiver.github.io/matrix-lab](https://zenitholiver.github.io/matrix-lab/)  
+> **GitHub 仓库：** [github.com/ZenithOliver/matrix-lab](https://github.com/ZenithOliver/matrix-lab)
+
 一个零依赖、可在本地或 GitHub Pages 直接打开的矩阵计算小工具。输入矩阵尺寸和每个元素，一次得到：
 
 1. **简化行阶梯形矩阵（RREF）**：展示每一次初等行变换及中间矩阵。
@@ -29,7 +32,8 @@
 
 ## 启动
 
-直接双击 `index.html`，或双击 `启动矩阵工坊.bat`。不需要安装依赖，不需要联网。
+- **在线版**：直接访问 [zenitholiver.github.io/matrix-lab](https://zenitholiver.github.io/matrix-lab/)。
+- **本地版**：直接双击 `index.html`，或双击 `启动矩阵工坊.bat`。不需要安装依赖，不需要联网。
 
 使用较新的 Chrome、Edge 或 Firefox 即可。所有数据只在浏览器本机处理，不会上传。
 
@@ -140,4 +144,4 @@ node tests/ui-check.mjs
 - 分数系数或复合符号因子参与乘法时会整体加括号，例如 `(1/2)·a`、`−(a + b)·R₁`，避免把分子/分母的范围读错。
 - 当前没有复数算术；含字母的文本（包括 `i`）都按独立常数符号处理，格内算式不会被展开。
 
-版本变化见 [CHANGELOG.md](CHANGELOG.md)。
+版本变化见 [CHANGELOG.md](CHANGELOG.md)。当前版本：**v0.3.0**。
